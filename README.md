@@ -60,7 +60,7 @@ If you find an option you require is missing, report this or make a PR adding th
 
 ## Examples
 
-This sections contains several example usages for the. If you use this container for a common scenrio or if any of the examples can be improved, please let me know the configurtion you have used so that I can improve this documentation.
+This sections contains several example usages for the. If you use this container for a common scenrio or if any of the examples can be improved, please let me know the configurtion you have used so that I can add it here or submit a PR adding it as an example.
 
 ### Reflect mDNS broadcasts between networks
 
@@ -74,4 +74,22 @@ docker run -d --name=mdns-reflector \
   flungo/avahi
 # Attach the container to the net2 network
 docker network connect net2 mdns-reflector
+```
+
+See [Connecting to a phyiscal network](#connecting_to_a_physical_network) to see how you can connect the container to a physical network - for example if you wanted to reflect mDNS between two WiFi VLANs).
+
+### Connecting to a physical network
+
+It is common to want to use this container with one or more physical networks (e.g. as a reflector between WiFi network), in order to do this a docker network can be created using the [macvlan](https://docs.docker.com/network/macvlan/) driver. The following example creates a macvlan network named `physical` connected to the `eno1` interface with subnet `10.0.0.0/24` and gateway `10.0.0.1`.
+
+```bash
+docker network create --driver macvlan --subnet 10.0.0.0/24 --gateway 10.0.0.1 --opt parent=eno1 physical
+```
+
+You can also connect to a VLAN on a physical interface by suffixing the parent with `.` and the VLAN ID (e.g. `--opt parent=eno1.123` for VLAN 123 on the `eno1` interface. The sub-interface does not need to exist before running the command to create the network as the driver will automatically create this.
+
+To ensure that an IP conflict does not occur, you should specify an available IP address on your physical network when attaching the network to your container. Assuming that your container is called `avahi` and `10.0.0.1` is an available IP in that network, you can connect this network as follows:
+
+```bash
+docker network connect physical avahi --ip 10.0.0.10
 ```
